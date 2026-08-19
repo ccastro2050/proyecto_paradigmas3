@@ -1,12 +1,16 @@
 # ==============================================================
-# Proyecto Paradigmas — versión 1
+# Proyecto Paradigmas — versión 3
 #
-#   API FACTURAS (FastAPI, :8002) — CRUD de producto
-#        └── PostgreSQL (:15432 hacia el host) — bdfacturas completa
+#                                  ┌→ PostgreSQL (:15432) — bdfacturas
+#   API FACTURAS (FastAPI, :8002) ─┤     el interruptor DB_PROVIDER
+#                                  └→ MariaDB   (:13332) — bdfacturas
 #
 # Uso:  docker compose up -d --build      (un solo comando)
-# Este archivo CRECE con las versiones: v3 suma MariaDB,
-# v4 suma SQL Server, v5 la API genérica, v6 el front.
+#   La API habla con PostgreSQL por defecto; para cambiar de motor
+#   SIN tocar código:  $env:DB_PROVIDER="mariadb"
+#                      docker compose up -d api-facturas
+# Este archivo CRECE con las versiones: v4 suma SQL Server,
+# v5 la API genérica, v6 el front.
 # ==============================================================
 services:
 
@@ -28,7 +32,25 @@ services:
       timeout: 5s
       retries: 10
 
-  # --- API Facturas v1 (CRUD de producto) ---
+  # --- MariaDB 11 — el SEGUNDO motor (v3): la misma bdfacturas ---
+  # También se inicializa solo: el script montado corre la PRIMERA vez
+  # (volumen vacío) — mismas semillas y mismos ids que PostgreSQL.
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: paradigmas123
+    volumes:
+      - mariadbdata:/var/lib/mysql                                        # los datos sobreviven a down
+      - ./db/init_mariadb.sql:/docker-entrypoint-initdb.d/init_mariadb.sql:ro
+    ports:
+      - "13332:3306"     # puerto en su PC (para HeidiSQL/DBeaver opcional)
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # --- API Facturas (v1: producto · v2: +5 entidades · v3: bi-motor) ---
   api-facturas:
     build: ./api_facturas
     volumes:
@@ -40,9 +62,19 @@ services:
     environment:
       # Entre contenedores se usa el NOMBRE del servicio (postgres), no localhost
       DB_POSTGRES: postgresql+asyncpg://paradigmas:paradigmas123@postgres:5432/bdfacturas_postgres_local
+      # v3 — la cadena del SEGUNDO motor:
+      DB_MARIADB: mysql+aiomysql://root:paradigmas123@mariadb:3306/bdfacturas_mariadb_local
+      # v3 — EL INTERRUPTOR: a qué motor le habla la API. Lee la variable
+      # DB_PROVIDER de su terminal; si no existe, postgres. Cambiar de
+      # motor = recrear SOLO este contenedor (segundos):
+      #   $env:DB_PROVIDER="mariadb"; docker compose up -d api-facturas
+      DB_PROVIDER: ${DB_PROVIDER:-postgres}
     depends_on:
       postgres:
         condition: service_healthy   # arranca cuando la BD RESPONDE, no cuando existe
+      mariadb:
+        condition: service_healthy   # ...y cuando el motor nuevo también responde
 
 volumes:
   pgdata:
+  mariadbdata:      # v3: la "memoria" del segundo motor
