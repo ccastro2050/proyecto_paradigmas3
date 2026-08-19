@@ -168,6 +168,55 @@ async def main() -> None:
     print("PRUEBA DE CAPAS OK: producto y persona funcionan con "
           "repositorios falsos, sin PostgreSQL")
 
+    # ------------------------------------------------------------------
+    # v3 — LA FÁBRICA elige el motor sin abrir conexiones (criterio 5).
+    # Construir un repositorio solo guarda la cadena; por eso se puede
+    # verificar el patrón con cadenas de mentira.
+    # ------------------------------------------------------------------
+    import os
+
+    from repositorios.repositorio_factura_mariadb import RepositorioFacturaMariaDB
+    from repositorios.repositorio_factura_postgresql import (
+        RepositorioFacturaPostgreSQL,
+    )
+    from repositorios.repositorio_producto_mariadb import (
+        RepositorioProductoMariaDB,
+    )
+    from repositorios.repositorio_producto_postgresql import (
+        RepositorioProductoPostgreSQL,
+    )
+    from servicios import ensamblador
+
+    os.environ.setdefault("DB_POSTGRES", "postgresql+asyncpg://finjo:finjo@nohay/nada")
+    os.environ.setdefault("DB_MARIADB", "mysql+aiomysql://finjo:finjo@nohay/nada")
+
+    os.environ["DB_PROVIDER"] = "postgres"
+    verificar(isinstance(ensamblador._crear_repositorio("producto"),
+                         RepositorioProductoPostgreSQL),
+              "fábrica postgres: producto del dialecto correcto")
+    verificar(isinstance(ensamblador._crear_repositorio("factura"),
+                         RepositorioFacturaPostgreSQL),
+              "fábrica postgres: factura del dialecto correcto")
+
+    os.environ["DB_PROVIDER"] = "mariadb"
+    verificar(isinstance(ensamblador._crear_repositorio("producto"),
+                         RepositorioProductoMariaDB),
+              "fábrica mariadb: producto del dialecto correcto")
+    verificar(isinstance(ensamblador._crear_repositorio("factura"),
+                         RepositorioFacturaMariaDB),
+              "fábrica mariadb: factura del dialecto correcto")
+
+    os.environ["DB_PROVIDER"] = "oracle"
+    try:
+        ensamblador._crear_repositorio("producto")
+        verificar(False, "DB_PROVIDER inválido debió fallar con mensaje claro")
+    except ValueError as excepcion:
+        verificar("inválido" in str(excepcion), "el error del proveedor es claro")
+    del os.environ["DB_PROVIDER"]
+
+    print("LA FÁBRICA OK: cada proveedor entrega su dialecto, "
+          "sin abrir conexiones")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

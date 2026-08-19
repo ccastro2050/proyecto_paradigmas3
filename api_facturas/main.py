@@ -1,5 +1,5 @@
 """
-Punto de entrada de la API Facturas v2.
+Punto de entrada de la API Facturas v3.
 
 Crea la aplicación FastAPI, registra el router de producto y expone el
 endpoint de diagnóstico. Swagger queda en /docs y ReDoc en /redoc
@@ -8,6 +8,8 @@ endpoint de diagnóstico. Swagger queda en /docs y ReDoc en /redoc
 Arranque:  uvicorn main:app --port 8002 --reload
 Requiere:  la variable de entorno DB_POSTGRES (ver 7_quickstart.md).
 """
+
+import os
 
 from fastapi import FastAPI
 
@@ -20,9 +22,10 @@ from controllers.vendedor_controller import router as router_vendedor
 
 app = FastAPI(
     title="API Facturas",
-    version="v2",
+    version="v3",
     description="Producto, persona, empresa, cliente, vendedor y factura "
-                "maestro-detalle contra PostgreSQL — versión 2 del proyecto.",
+                "maestro-detalle contra PostgreSQL O MariaDB (el motor lo "
+                "elige DB_PROVIDER) — versión 3 del proyecto.",
 )
 
 # Un router por entidad — el molde de la v1, replicado (v2):
@@ -37,5 +40,7 @@ app.include_router(router_factura)
 @app.get("/", tags=["Diagnóstico"])
 async def diagnostico():
     """Confirma que la API está en línea (usable como healthcheck)."""
-    return {"mensaje": "API Facturas funcionando", "version": "v2",
+    return {"mensaje": "API Facturas funcionando", "version": "v3",
+            # v3: a cuál motor le está hablando la API (el interruptor):
+            "motor": os.environ.get("DB_PROVIDER", "postgres"),
             "documentacion": "/docs"}
