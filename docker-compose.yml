@@ -1,9 +1,9 @@
 # ==============================================================
 # Proyecto Paradigmas — versión 3
 #
-#                                  ┌→ PostgreSQL (:15432) — bdfacturas
-#   API FACTURAS (FastAPI, :8002) ─┤     el interruptor DB_PROVIDER
-#                                  └→ MariaDB   (:13332) — bdfacturas
+#                                  ┌→ PostgreSQL (:15434) — bdfacturas
+#   API FACTURAS (FastAPI, :8004) ─┤     el interruptor DB_PROVIDER
+#                                  └→ MariaDB   (:13334) — bdfacturas
 #
 # Uso:  docker compose up -d --build      (un solo comando)
 #   La API habla con PostgreSQL por defecto; para cambiar de motor
@@ -25,7 +25,7 @@ services:
       - pgdata:/var/lib/postgresql/data                          # los datos sobreviven a down/reinicios
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro    # se ejecuta solo con volumen vacío
     ports:
-      - "15432:5432"     # puerto en su PC (para DBeaver/pgAdmin opcional)
+      - "15434:5432"     # puerto en su PC (para DBeaver/pgAdmin opcional)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U paradigmas -d bdfacturas_postgres_local"]
       interval: 5s
@@ -43,7 +43,7 @@ services:
       - mariadbdata:/var/lib/mysql                                        # los datos sobreviven a down
       - ./db/init_mariadb.sql:/docker-entrypoint-initdb.d/init_mariadb.sql:ro
     ports:
-      - "13332:3306"     # puerto en su PC (para HeidiSQL/DBeaver opcional)
+      - "13334:3306"     # puerto en su PC (para HeidiSQL/DBeaver opcional)
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
@@ -55,10 +55,10 @@ services:
     build: ./api_facturas
     volumes:
       - ./api_facturas:/app        # el código se monta: guardar un .py recarga solo
-    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8004 --reload
     restart: unless-stopped
     ports:
-      - "8002:8002"                # http://localhost:8002/docs
+      - "8004:8004"                # http://localhost:8004/docs
     environment:
       # Entre contenedores se usa el NOMBRE del servicio (postgres), no localhost
       DB_POSTGRES: postgresql+asyncpg://paradigmas:paradigmas123@postgres:5432/bdfacturas_postgres_local

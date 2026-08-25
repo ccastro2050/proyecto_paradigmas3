@@ -1,13 +1,13 @@
 {
   "info": {
     "name": "API Facturas v3 (Python + PostgreSQL + MariaDB)",
-    "description": "Acumulativa: v1 (producto, 13) + v2 (moldes y factura, 14). La v3 NO agrega peticiones — agrega un MOTOR: las 27 funcionan idénticas contra PostgreSQL (default) o MariaDB, según el interruptor DB_PROVIDER del compose. La petición 1 (diagnóstico) muestra el motor activo. La variable {{base}} apunta al proyecto del curso (localhost:8002); para probar SU reconstrucción cámbiela a localhost:8102.",
+    "description": "Acumulativa: v1 (producto, 13) + v2 (moldes y factura, 14). La v3 NO agrega peticiones — agrega un MOTOR: las 27 funcionan idénticas contra PostgreSQL (default) o MariaDB, según el interruptor DB_PROVIDER del compose. La petición 1 (diagnóstico) muestra el motor activo. La variable {{base}} apunta al proyecto del curso (localhost:8004); para probar SU reconstrucción cámbiela a localhost:8104.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "base",
-      "value": "http://localhost:8002"
+      "value": "http://localhost:8004"
     }
   ],
   "item": [
