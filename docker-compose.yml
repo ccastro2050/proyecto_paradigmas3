@@ -10,7 +10,7 @@
 #   SIN tocar código:  $env:DB_PROVIDER="mariadb"
 #                      docker compose up -d api-facturas
 # Este archivo CRECE con las versiones: v4 suma SQL Server,
-# v5 la API genérica, v6 el front.
+# v5 el front.
 # ==============================================================
 services:
 
